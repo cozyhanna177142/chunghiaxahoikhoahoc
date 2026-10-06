@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Trò Chơi: Nhà Nước XHCN Việt Nam</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap');
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Roboto', 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #8B0000 0%, #CC0000 40%, #B8860B 100%);
+      color: #fff;
+    }
+
+    /* ===== STAR PATTERN ===== */
+    .bg-pattern {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+    .bg-pattern::before {
+      content: '★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★';
+      position: absolute;
+      top: -20px;
+      left: 0;
+      right: 0;
+      font-size: 2rem;
+      color: rgba(255,215,0,0.08);
+      letter-spacing: 1.2rem;
+      line-height: 4rem;
+      word-break: break-all;
+    }
+
+    /* ===== COMMON ===== */
+    .screen { position: relative; z-index: 1; }
+
+    /* ===== HEADER BANNER ===== */
+    .header-banner {
+      background: linear-gradient(90deg, #8B0000, #CC0000, #8B0000);
+      border-bottom: 4px solid #FFD700;
+      padding: 12px 20px;
+      text-align: center;
+    }
+    .star-row { color: #FFD700; font-size: 1.4rem; letter-spacing: 6px; }
+    .game-title {
+      font-size: clamp(1.2rem, 3vw, 1.8rem);
+      font-weight: 900;
+      color: #FFD700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+      margin: 4px 0;
+    }
+    .subtitle { font-size: 0.85rem; color: #FFF9C4; opacity: 0.9; }
+
+    /* ===== PANELS ===== */
+    .panel {
+      background: rgba(0,0,0,0.35);
+      border: 2px solid rgba(255,215,0,0.4);
+      border-radius: 12px;
+      backdrop-filter: blur(4px);
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn-gold {
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      color: #8B0000;
+      font-weight: 900;
+      font-size: 1rem;
+      padding: 12px 32px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 15px rgba(255,165,0,0.4);
+      transition: all 0.2s;
+    }
+    .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,165,0,0.6); }
+    .btn-gold:active { transform: translateY(0); }
+
+    .btn-red {
+      background: linear-gradient(135deg, #CC0000, #8B0000);
+      color: #FFD700;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 10px 24px;
+      border: 2px solid #FFD700;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-red:hover { background: linear-gradient(135deg, #FF0000, #CC0000); }
+
+    .btn-outline {
+      background: transparent;
+      color: #FFD700;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 8px 18px;
+      border: 2px solid #FFD700;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-outline:hover { background: rgba(255,215,0,0.15); }
+
+    /* ===== ANSWER BUTTONS ===== */
+    .answer-btn {
+      width: 100%;
+      text-align: left;
+      padding: 14px 18px;
+      border-radius: 10px;
+      border: 2px solid rgba(255,215,0,0.3);
+      background: rgba(0,0,0,0.25);
+      color: #fff;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .answer-btn:hover:not(:disabled) {
+      background: rgba(255,215,0,0.15);
+      border-color: #FFD700;
+      transform: translateX(4px);
+    }
+    .answer-btn .label {
+      background: #FFD700;
+      color: #8B0000;
+      font-weight: 900;
+      min-width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .answer-btn.correct { background: rgba(0,180,0,0.35); border-color: #00CC44; }
+    .answer-btn.wrong   { background: rgba(200,0,0,0.35); border-color: #FF4444; }
+    .answer-btn.neutral { background: rgba(255,215,0,0.15); border-color: #FFD700; }
+    .answer-btn:disabled { cursor: not-allowed; }
+
+    /* ===== TIMER ===== */
+    .timer-ring {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      border: 6px solid rgba(255,215,0,0.2);
+      border-top-color: #FFD700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #FFD700;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .timer-ring.urgent { border-top-color: #FF4444; color: #FF4444; animation: pulse 0.5s infinite; }
+    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+
+    /* ===== PROGRESS BAR ===== */
+    .progress-bar {
+      height: 6px;
+      background: rgba(255,215,0,0.2);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #FFD700, #FFA500);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    /* ===== SCORE BOARD ===== */
+    .team-score {
+      background: rgba(0,0,0,0.3);
+      border: 2px solid rgba(255,215,0,0.3);
+      border-radius: 10px;
+      padding: 10px 14px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+    .team-score.active { border-color: #FFD700; box-shadow: 0 0 15px rgba(255,215,0,0.3); }
+    .team-score .team-name { font-size: 0.8rem; color: #FFF9C4; font-weight: 700; text-transform: uppercase; }
+    .team-score .team-pts { font-size: 1.6rem; font-weight: 900; color: #FFD700; }
+
+    /* ===== RESULT SCREEN ===== */
+    .winner-card {
+      background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,165,0,0.1));
+      border: 3px solid #FFD700;
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+    }
+    .trophy { font-size: 4rem; animation: bounce 1s infinite; }
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+
+    /* ===== CONFETTI ===== */
+    .confetti-piece {
+      position: fixed;
+      width: 10px; height: 10px;
+      border-radius: 2px;
+      animation: fall 3s linear forwards;
+      z-index: 1000;
+    }
+    @keyframes fall {
+      0%   { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* ===== EXPLANATION BOX ===== */
+    .explanation-box {
+      background: rgba(0,100,0,0.3);
+      border: 2px solid rgba(0,200,100,0.4);
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: #E8FFE8;
+    }
+
+    /* ===== SETUP FORM ===== */
+    .team-input {
+      background: rgba(0,0,0,0.3);
+      border: 2px solid rgba(255,215,0,0.4);
+      border-radius: 8px;
+      color: #fff;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      width: 100%;
+      outline: none;
+    }
+    .team-input:focus { border-color: #FFD700; }
+    .team-input::placeholder { color: rgba(255,255,255,0.4); }
+
+    /* ===== TIEBREAKER ===== */
+    .tb-btn {
+      background: rgba(0,0,0,0.3);
+      border: 2px solid rgba(255,215,0,0.4);
+      border-radius: 10px;
+      color: #fff;
+      padding: 14px 20px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 700;
+      transition: all 0.2s;
+      text-align: left;
+    }
+    .tb-btn:hover:not(:disabled) { background: rgba(255,215,0,0.2); border-color: #FFD700; }
+    .tb-btn.tb-correct { background: rgba(0,180,0,0.4); border-color: #00CC44; color: #00FF88; }
+    .tb-btn.tb-wrong   { background: rgba(200,0,0,0.4); border-color: #FF4444; color: #FF8888; }
+
+    /* Hide screens */
+    .hidden { display: none !important; }
+
+    /* Scrollable content */
+    .quiz-content { max-height: calc(100vh - 200px); overflow-y: auto; padding-bottom: 20px; }
+    .quiz-content::-webkit-scrollbar { width: 6px; }
+    .quiz-content::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+    .quiz-content::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.4); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- BACKGROUND PATTERN -->
+<div class="bg-pattern"></div>
+
+<!-- HEADER -->
+<div class="header-banner">
+  <div class="star-row">★ ★ ★ ★ ★</div>
+  <div class="game-title">🏛️ Trò Chơi Nhận Thức Chính Trị 🏛️</div>
+  <div class="subtitle">Nhà nước & Nhà nước Pháp quyền XHCN Việt Nam</div>
+</div>
+
+<!-- ==================== SCREEN 1: SETUP ==================== -->
+<div id="screen-setup" class="screen p-4 max-w-2xl mx-auto">
+  <div class="panel p-6 mt-4">
+    <h2 class="text-center text-yellow-300 font-black text-xl mb-1">⚙️ THIẾT LẬP TRÒ CHƠI</h2>
+    <p class="text-center text-xs text-yellow-100 opacity-70 mb-5">Nhập tên các đội tham gia (3–4 đội)</p>
+
+    <div class="mb-4">
+      <label class="block text-yellow-300 font-bold text-sm mb-2">Số lượng đội:</label>
+      <div class="flex gap-3">
+        <button class="btn-outline team-count-btn active" data-count="3">3 Đội</button>
+        <button class="btn-outline team-count-btn" data-count="4">4 Đội</button>
+      </div>
+    </div>
+
+    <div id="team-inputs" class="space-y-3 mb-6">
+      <!-- Generated by JS -->
+    </div>
+
+    <div class="panel p-4 mb-5">
+      <h3 class="text-yellow-300 font-bold mb-3 text-sm">📋 THỂ LỆ CUỘC THI</h3>
+      <ul class="text-xs text-yellow-100 space-y-1.5 opacity-90">
+        <li>🎯 <strong>18 câu hỏi</strong> về Nhà nước & Nhà nước pháp quyền XHCN VN</li>
+        <li>⏱️ Mỗi câu có <strong>10 giây</strong> thảo luận</li>
+        <li>🙋 Hết giờ: tất cả các đội <strong>đồng loạt giơ đáp án</strong></li>
+        <li>✅ Trả lời đúng: <strong>+1 điểm</strong> | ❌ Sai / không trả lời: 0 điểm</li>
+        <li>📖 Sau mỗi câu: nhóm thuyết trình giải thích ngắn 1–2 câu</li>
+        <li>🏆 Cao điểm nhất thắng | Bằng điểm → Câu hỏi phụ tốc độ</li>
+      </ul>
+    </div>
+
+    <div class="text-center">
+      <button class="btn-gold" onclick="startGame()">🚀 BẮT ĐẦU THI ĐẤU!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN 2: QUIZ ==================== -->
+<div id="screen-quiz" class="screen hidden">
+  <!-- Top bar: scores -->
+  <div class="px-4 py-3 bg-black bg-opacity-20 border-b border-yellow-700 border-opacity-30">
+    <div id="score-board" class="flex gap-2 justify-center flex-wrap"></div>
+  </div>
+
+  <div class="quiz-content px-4 max-w-3xl mx-auto">
+    <!-- Question header -->
+    <div class="flex items-center justify-between mt-4 mb-3">
+      <div>
+        <div class="text-yellow-300 font-black text-lg" id="q-number">CÂU 1 / 18</div>
+        <div class="text-xs text-yellow-100 opacity-60" id="q-category">Bản chất Nhà nước XHCN</div>
+      </div>
+      <div class="timer-ring" id="timer-display">10</div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-bar mb-4">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+
+    <!-- Question text -->
+    <div class="panel p-4 mb-4">
+      <p class="text-base font-semibold leading-relaxed" id="q-text"></p>
+    </div>
+
+    <!-- Answer options -->
+    <div class="grid grid-cols-1 gap-3 mb-4" id="answers-grid">
+      <!-- Generated by JS -->
+    </div>
+
+    <!-- Explanation (hidden until revealed) -->
+    <div id="explanation-area" class="hidden mb-4">
+      <div class="explanation-box">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-green-300 font-bold">✅ Đáp án đúng:</span>
+          <span class="font-black text-yellow-300 text-lg" id="correct-label"></span>
+        </div>
+        <p id="explanation-text"></p>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="flex gap-3 justify-center flex-wrap" id="action-area">
+      <button class="btn-gold" id="btn-reveal" onclick="revealAnswer()">📢 CÔNG BỐ ĐÁP ÁN</button>
+      <button class="btn-red hidden" id="btn-score" onclick="openScoreInput()">🏅 NHẬP ĐIỂM</button>
+      <button class="btn-red hidden" id="btn-next" onclick="nextQuestion()">▶ CÂU TIẾP THEO</button>
+    </div>
+
+    <!-- Score input modal -->
+    <div id="score-modal" class="hidden panel p-4 mt-4">
+      <h3 class="text-yellow-300 font-bold mb-3 text-sm">🏅 ĐỘI NÀO TRẢ LỜI ĐÚNG? (+1 điểm)</h3>
+      <div id="score-checkboxes" class="grid grid-cols-2 gap-2 mb-4"></div>
+      <div class="text-center">
+        <button class="btn-gold" onclick="applyScores()">✔ XÁC NHẬN ĐIỂM</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN 3: TIEBREAKER ==================== -->
+<div id="screen-tiebreaker" class="screen hidden p-4 max-w-2xl mx-auto">
+  <div class="panel p-6 mt-4">
+    <div class="text-center mb-4">
+      <div class="text-4xl mb-2">⚡</div>
+      <h2 class="text-yellow-300 font-black text-xl">CÂU HỎI PHỤ</h2>
+      <p class="text-xs text-yellow-100 opacity-70">Bằng điểm! Đội trả lời đúng nhanh nhất THẮNG!</p>
+    </div>
+    <div class="panel p-4 mb-4">
+      <p class="font-semibold leading-relaxed" id="tb-question"></p>
+    </div>
+    <div class="space-y-3 mb-4" id="tb-answers"></div>
+    <div id="tb-result" class="hidden explanation-box text-center"></div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN 4: RESULTS ==================== -->
+<div id="screen-results" class="screen hidden p-4 max-w-2xl mx-auto">
+  <div class="panel p-6 mt-4">
+    <div class="winner-card mb-6">
+      <div class="trophy">🏆</div>
+      <h2 class="text-yellow-300 font-black text-2xl mt-2" id="winner-title"></h2>
+      <p class="text-yellow-100 mt-1 text-sm" id="winner-subtitle"></p>
+    </div>
+
+    <h3 class="text-yellow-300 font-bold mb-3 text-center">📊 BẢNG XẾP HẠNG</h3>
+    <div id="final-ranking" class="space-y-2 mb-6"></div>
+
+    <!-- Summary stats -->
+    <div class="grid grid-cols-3 gap-3 mb-6">
+      <div class="panel p-3 text-center">
+        <div class="text-2xl font-black text-yellow-300">18</div>
+        <div class="text-xs text-yellow-100 opacity-70">Câu hỏi</div>
+      </div>
+      <div class="panel p-3 text-center">
+        <div class="text-2xl font-black text-yellow-300" id="stat-teams">4</div>
+        <div class="text-xs text-yellow-100 opacity-70">Đội thi</div>
+      </div>
+      <div class="panel p-3 text-center">
+        <div class="text-2xl font-black text-yellow-300" id="stat-winner-score">0</div>
+        <div class="text-xs text-yellow-100 opacity-70">Điểm cao nhất</div>
+      </div>
+    </div>
+
+    <div class="text-center space-x-3">
+      <button class="btn-gold" onclick="location.reload()">🔄 CHƠI LẠI</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =========================================================
+//  DATA: 18 QUESTIONS + 1 TIEBREAKER
+// =========================================================
+const QUESTIONS = [
+  // === PHẦN 1: BẢN CHẤT NHÀ NƯỚC XHCN (Câu 1–6) ===
+  {
+    category: "Bản chất Nhà nước XHCN",
+    text: "Đặc điểm nào sau đây thể hiện rõ nhất bản chất của Nhà nước xã hội chủ nghĩa?",
+    options: [
+      "Quyền lực nhà nước thuộc về một nhóm người có địa vị kinh tế cao.",
+      "Nhà nước đặt lợi ích của bộ máy nhà nước cao hơn lợi ích của nhân dân.",
+      "Nhà nước mang bản chất của giai cấp công nhân, đồng thời có tính nhân dân rộng rãi và tính dân tộc sâu sắc.",
+      "Nhà nước không chịu sự kiểm soát của nhân dân trong quá trình thực hiện quyền lực."
+    ],
+    correct: 2,
+    explanation: "Nhà nước XHCN mang bản chất của giai cấp công nhân, đồng thời đại diện và bảo vệ lợi ích của đông đảo nhân dân lao động. Nhà nước hướng tới thực hiện quyền làm chủ của nhân dân, bảo đảm lợi ích của nhân dân và của dân tộc."
+  },
+  {
+    category: "Bản chất Nhà nước XHCN",
+    text: "Theo quan điểm Mác–Lênin, vì sao Nhà nước XHCN vừa mang bản chất giai cấp công nhân, vừa có tính nhân dân rộng rãi và tính dân tộc sâu sắc?",
+    options: [
+      "Vì Nhà nước XHCN đứng ngoài mọi giai cấp, chỉ đại diện cho lợi ích chung trừu tượng.",
+      "Vì lợi ích căn bản của giai cấp công nhân thống nhất với lợi ích của đại đa số nhân dân lao động và phù hợp với lợi ích phát triển của dân tộc.",
+      "Vì sau cách mạng XHCN, mọi giai cấp ngay lập tức không còn tồn tại.",
+      "Vì Nhà nước XHCN chỉ bảo vệ lợi ích của giai cấp công nhân, các giai cấp khác không có quyền lợi chính đáng."
+    ],
+    correct: 1,
+    explanation: "Lợi ích căn bản của giai cấp công nhân có sự thống nhất với lợi ích của nhân dân lao động và gắn với nhiệm vụ xây dựng, bảo vệ đất nước. Điều đó tạo nên tính nhân dân rộng rãi và tính dân tộc sâu sắc."
+  },
+  {
+    category: "Bản chất Nhà nước XHCN",
+    text: "Về phương diện kinh tế, bản chất của nhà nước XHCN được quy định bởi yếu tố nào?",
+    options: [
+      "Chế độ sở hữu tư nhân về tư liệu sản xuất chủ yếu.",
+      "Sự phát triển cao độ của nền kinh tế tư bản chủ nghĩa.",
+      "Chế độ sở hữu xã hội về tư liệu sản xuất chủ yếu.",
+      "Khát vọng thoát khỏi sự áp bức của nhân dân lao động."
+    ],
+    correct: 2,
+    explanation: "Về kinh tế, bản chất của nhà nước XHCN chịu sự quy định của chế độ sở hữu xã hội về tư liệu sản xuất chủ yếu. Dựa trên cơ sở này, quan hệ sản xuất bóc lột không còn tồn tại."
+  },
+  {
+    category: "Bản chất Nhà nước XHCN",
+    text: "Sự thống trị về chính trị của giai cấp vô sản trong Nhà nước XHCN khác biệt về chất so với các giai cấp bóc lột trước đây ở điểm nào?",
+    options: [
+      "Là sự thống trị của thiểu số đối với đa số nhân dân lao động.",
+      "Là sự thống trị của đa số đối với thiểu số giai cấp bóc lột nhằm giải phóng giai cấp và nhân dân.",
+      "Là sự thống trị nhằm mục đích bảo vệ và duy trì địa vị cho các tầng lớp tư sản.",
+      "Là sự thống trị không thông qua bộ máy chính trị - hành chính hay cơ quan cưỡng chế."
+    ],
+    correct: 1,
+    explanation: "Khác với các nhà nước bóc lột (thiểu số thống trị đa số), sự thống trị của giai cấp vô sản là sự thống trị của đa số đối với thiểu số giai cấp bóc lột, nhằm giải phóng giai cấp mình và toàn thể nhân dân lao động."
+  },
+  {
+    category: "Chức năng Nhà nước XHCN",
+    text: "Một ý kiến cho rằng: 'Chức năng quan trọng nhất và lâu dài nhất của Nhà nước XHCN là trấn áp các lực lượng chống đối.' Đánh giá nào chính xác nhất?",
+    options: [
+      "Đúng, vì mọi nhà nước chỉ tồn tại nhằm thực hiện chức năng trấn áp.",
+      "Đúng, vì chức năng tổ chức, xây dựng xã hội mới không thuộc nhiệm vụ của Nhà nước XHCN.",
+      "Chưa đầy đủ, vì Nhà nước XHCN vừa bảo vệ thành quả cách mạng, vừa chú trọng tổ chức xây dựng xã hội mới; khi đối kháng giai cấp mất đi, chức năng trấn áp từng bước thu hẹp.",
+      "Sai hoàn toàn, vì Nhà nước XHCN không cần bảo vệ chế độ và không thực hiện bất kỳ hoạt động cưỡng chế nào."
+    ],
+    correct: 2,
+    explanation: "Nhà nước XHCN vừa bảo vệ chính quyền cách mạng, vừa chú trọng chức năng tổ chức xây dựng xã hội mới. Theo Mác–Lênin, khi điều kiện làm nảy sinh đối kháng giai cấp bị xóa bỏ, chức năng trấn áp sẽ từng bước thu hẹp, chức năng quản lý xã hội ngày càng nổi bật."
+  },
+  {
+    category: "Bản chất Nhà nước XHCN",
+    text: "Về mặt văn hóa–xã hội, nhà nước XHCN được xây dựng trên nền tảng tinh thần chủ đạo là gì?",
+    options: [
+      "Sự kết hợp giữa các tư tưởng phong kiến cổ đại và trào lưu văn hóa phương Tây.",
+      "Tư tưởng dân tộc chủ nghĩa hẹp hòi nhằm loại bỏ hoàn toàn các giá trị văn hóa ngoại lai.",
+      "Lý luận của chủ nghĩa Mác–Lênin và những giá trị văn hóa tiên tiến, tiến bộ của nhân loại.",
+      "Lý luận về quyền tư hữu tài sản tự do tuyệt đối của mọi cá nhân trong xã hội."
+    ],
+    correct: 2,
+    explanation: "Về văn hóa – xã hội, nhà nước XHCN được xây dựng trên nền tảng tinh thần là lý luận của chủ nghĩa Mác–Lênin và những giá trị văn hóa tiên tiến, tiến bộ của nhân loại, đồng thời mang bản sắc riêng của dân tộc."
+  },
+
+  // === PHẦN 2: CƠ SỞ KINH TẾ & TỔ CHỨC BỘ MÁY (Câu 7–9) ===
+  {
+    category: "Cơ sở kinh tế Nhà nước XHCN",
+    text: "Theo quan điểm Mác–Lênin, yếu tố nào đóng vai trò là cơ sở kinh tế quyết định bản chất và tính chất tiến bộ của Nhà nước XHCN?",
+    options: [
+      "Nền kinh tế vận hành hoàn toàn theo cơ chế thị trường tự do, không có sự can thiệp của chính phủ.",
+      "Sự áp đảo tuyệt đối của các tập đoàn kinh tế tư nhân lớn nắm giữ hạ tầng sản xuất quốc gia.",
+      "Chế độ công hữu về các tư liệu sản xuất chủ yếu, hướng tới phục vụ lợi ích chung của toàn xã hội.",
+      "Sự phụ thuộc hoàn toàn vào nguồn viện trợ và ngân sách đầu tư từ các tổ chức quốc tế."
+    ],
+    correct: 2,
+    explanation: "Nhà nước XHCN được xây dựng trên chế độ công hữu về tư liệu sản xuất chủ yếu (toàn dân hoặc tập thể sở hữu). Đây là nền tảng kinh tế để xóa bỏ chế độ người bóc lột người, đảm bảo quyền lực kinh tế thuộc về đa số nhân dân lao động."
+  },
+  {
+    category: "Tổ chức bộ máy Nhà nước XHCN",
+    text: "Dưới góc độ lý luận Mác–Lênin, đặc trưng tổ chức bộ máy nào thể hiện sự khác biệt căn bản giữa Nhà nước XHCN và nhà nước pháp quyền tư bản chủ nghĩa?",
+    options: [
+      "Cơ quan lập pháp được bầu ra thông qua hình thức phổ thông đầu phiếu.",
+      "Quyền lực nhà nước là thống nhất, có sự phân công, phối hợp và kiểm soát giữa các cơ quan, không áp dụng cơ chế 'tam quyền phân lập' tuyệt đối.",
+      "Xây dựng hệ thống pháp luật mang tính cưỡng chế để duy trì trật tự xã hội.",
+      "Tồn tại hệ thống Tòa án và Viện kiểm sát để thực thi và bảo vệ pháp luật."
+    ],
+    correct: 1,
+    explanation: "Nhà nước tư bản áp dụng 'tam quyền phân lập' (ba nhánh độc lập và kiềm chế nhau). Trái lại, Nhà nước XHCN vận hành theo nguyên tắc 'thống nhất quyền lực' – toàn bộ quyền lực thuộc về nhân dân và tập trung vào cơ quan đại diện cao nhất (Quốc hội), rồi mới phân công, phối hợp và kiểm soát."
+  },
+  {
+    category: "Nhà nước pháp quyền XHCN VN",
+    text: "Nội dung nào là đặc điểm cơ bản của Nhà nước pháp quyền xã hội chủ nghĩa Việt Nam?",
+    options: [
+      "Quyền lực nhà nước được tập trung tuyệt đối vào một cơ quan duy nhất.",
+      "Quyền lực nhà nước là thống nhất, có sự phân công, phối hợp và kiểm soát giữa các cơ quan thực hiện quyền lập pháp, hành pháp và tư pháp.",
+      "Các cơ quan nhà nước có thể hoạt động độc lập hoàn toàn và không cần phối hợp với nhau.",
+      "Pháp luật chỉ có vai trò điều chỉnh hoạt động của người dân, không điều chỉnh hoạt động của cơ quan nhà nước."
+    ],
+    correct: 1,
+    explanation: "Nhà nước pháp quyền XHCN Việt Nam thực hiện nguyên tắc quyền lực nhà nước là thống nhất, đồng thời có sự phân công, phối hợp và kiểm soát giữa các cơ quan nhà nước trong việc thực hiện quyền lập pháp, hành pháp và tư pháp. Điều này góp phần hạn chế lạm quyền và nâng cao hiệu quả quản lý."
+  },
+
+  // === PHẦN 3: DÂN CHỦ XHCN & NHÀ NƯỚC PHÁP QUYỀN VN (Câu 10–15) ===
+  {
+    category: "Dân chủ XHCN",
+    text: "Nền dân chủ XHCN ở Việt Nam được thực hiện thông qua những hình thức dân chủ cơ bản nào?",
+    options: [
+      "Chỉ thực hiện bằng hình thức dân chủ gián tiếp (dân chủ đại diện).",
+      "Chỉ thực hiện bằng hình thức dân chủ trực tiếp.",
+      "Kết hợp cả hai hình thức: dân chủ trực tiếp và dân chủ gián tiếp.",
+      "Không sử dụng hình thức đại diện mà chỉ thông qua trưng cầu ý dân."
+    ],
+    correct: 2,
+    explanation: "Quyền làm chủ của nhân dân được thực hiện qua hai hình thức: (1) Dân chủ trực tiếp (bầu cử, ứng cử, góp ý văn bản pháp luật, trưng cầu ý dân); (2) Dân chủ gián tiếp thông qua đại diện do nhân dân bầu ra (Quốc hội, HĐND các cấp)."
+  },
+  {
+    category: "Dân chủ XHCN",
+    text: "Bản chất chính trị của nền dân chủ XHCN thể hiện ở việc:",
+    options: [
+      "Mọi quyền lực thuộc về giai cấp công nhân.",
+      "Quyền lực nhà nước thuộc về nhân dân, do giai cấp công nhân lãnh đạo thông qua Đảng Cộng sản.",
+      "Mọi công dân đều có quyền tham gia quản lý nhà nước một cách trực tiếp mà không cần đại diện.",
+      "Quyền lực tập trung vào tay một số ít người đứng đầu bộ máy nhà nước."
+    ],
+    correct: 1,
+    explanation: "Bản chất chính trị của dân chủ XHCN là sự lãnh đạo của giai cấp công nhân thông qua đảng tiên phong đối với toàn xã hội, để thực hiện quyền lực và lợi ích của toàn thể nhân dân lao động, trong đó nhân dân là người làm chủ nhà nước."
+  },
+  {
+    category: "Nhà nước pháp quyền XHCN VN",
+    text: "Trong mô hình Nhà nước pháp quyền XHCN Việt Nam, tính thượng tôn Hiến pháp và pháp luật được thể hiện như thế nào?",
+    options: [
+      "Pháp luật chỉ dùng để quản lý nhân dân, các cơ quan nhà nước không chịu sự điều chỉnh của pháp luật.",
+      "Hiến pháp và pháp luật giữ vị trí tối thượng; mọi cơ quan nhà nước, tổ chức và cá nhân đều phải nghiêm chỉnh chấp hành và hoạt động trong khuôn khổ pháp luật.",
+      "Quyền lực cá nhân của người đứng đầu cơ quan nhà nước có giá trị cao hơn quy định của Hiến pháp.",
+      "Các văn bản hướng dẫn dưới luật của bộ, ngành có giá trị pháp lý cao hơn Hiến pháp khi có xung đột."
+    ],
+    correct: 1,
+    explanation: "Một trong những đặc trưng cơ bản của Nhà nước pháp quyền XHCN Việt Nam là quản lý xã hội bằng Hiến pháp và pháp luật. Không một tổ chức hay cá nhân nào được đứng trên hoặc đứng ngoài pháp luật."
+  },
+  {
+    category: "Nhà nước pháp quyền XHCN VN",
+    text: "Một trong những đặc trưng cơ bản của Nhà nước pháp quyền XHCN Việt Nam là:",
+    options: [
+      "Nhà nước quản lý xã hội chủ yếu bằng đạo đức và lệ làng.",
+      "Quyền lực nhà nước là thống nhất, có sự phân công, phối hợp, kiểm soát giữa các cơ quan trong việc thực hiện quyền lập pháp, hành pháp, tư pháp.",
+      "Quyền lực nhà nước được phân chia độc lập hoàn toàn thành ba quyền theo mô hình tam quyền phân lập.",
+      "Nhà nước đứng trên pháp luật để điều hành các hoạt động kinh tế, xã hội."
+    ],
+    correct: 1,
+    explanation: "Đặc trưng cơ bản của Nhà nước pháp quyền XHCN Việt Nam là quyền lực nhà nước thống nhất (thuộc về nhân dân), nhưng có sự phân công rành mạch, phối hợp chặt chẽ và kiểm soát lẫn nhau giữa ba nhánh quyền lực. Nước ta không thực hiện cơ chế 'tam quyền phân lập'."
+  },
+  {
+    category: "Nhà nước pháp quyền XHCN VN",
+    text: "Đặc trưng nào phân biệt Nhà nước XHCN Việt Nam với các nhà nước tư sản về phương diện quyền lực?",
+    options: [
+      "Việt Nam áp dụng hoàn toàn mô hình tam quyền phân lập như các nước phương Tây.",
+      "Quyền lực nhà nước ở Việt Nam là thống nhất, thuộc về nhân dân; không tách rời lập pháp, hành pháp, tư pháp thành ba nhánh hoàn toàn độc lập.",
+      "Quốc hội Việt Nam không có thực quyền lập pháp.",
+      "Chính phủ Việt Nam có quyền phủ quyết các quyết định của Quốc hội."
+    ],
+    correct: 1,
+    explanation: "Điểm khác biệt cốt lõi: Nhà nước XHCN Việt Nam vận hành theo nguyên tắc quyền lực nhà nước là thống nhất, thuộc về nhân dân. Ba nhánh quyền lực có sự phân công nhưng phối hợp và kiểm soát lẫn nhau, không hoàn toàn tách biệt như mô hình tam quyền phân lập tư bản."
+  },
+  {
+    category: "Dân chủ XHCN",
+    text: "Điều nào sau đây đúng về mối quan hệ giữa dân chủ XHCN và Nhà nước pháp quyền XHCN?",
+    options: [
+      "Dân chủ XHCN và Nhà nước pháp quyền XHCN là hai khái niệm hoàn toàn tách biệt, không liên quan.",
+      "Nhà nước pháp quyền XHCN là công cụ thực hiện và bảo đảm nền dân chủ XHCN; dân chủ XHCN là nền tảng chính trị của Nhà nước pháp quyền XHCN.",
+      "Nhà nước pháp quyền XHCN phủ nhận nền dân chủ và thay thế bằng cai trị pháp lý.",
+      "Dân chủ XHCN chỉ tồn tại trong giai đoạn tiền cách mạng, không có vai trò trong Nhà nước pháp quyền."
+    ],
+    correct: 1,
+    explanation: "Nhà nước pháp quyền XHCN là hình thức tổ chức quyền lực nhà nước, là công cụ thể chế hóa và bảo đảm thực hiện nền dân chủ XHCN. Ngược lại, dân chủ XHCN là nền tảng chính trị, mục tiêu và động lực của Nhà nước pháp quyền XHCN Việt Nam."
+  },
+
+  // === PHẦN 4: TỔNG HỢP & NÂNG CAO (Câu 16–18) ===
+  {
+    category: "Tổng hợp & Nâng cao",
+    text: "Đặc trưng nào KHÔNG phải là đặc trưng của Nhà nước pháp quyền XHCN Việt Nam?",
+    options: [
+      "Nhà nước do Đảng Cộng sản Việt Nam lãnh đạo.",
+      "Hiến pháp và pháp luật giữ vị trí tối thượng trong quản lý nhà nước và xã hội.",
+      "Nhà nước bảo đảm và tôn trọng quyền con người, quyền công dân.",
+      "Nhà nước phi giai cấp, không mang bản chất giai cấp công nhân."
+    ],
+    correct: 3,
+    explanation: "Nhà nước pháp quyền XHCN Việt Nam vẫn mang bản chất giai cấp công nhân, do Đảng Cộng sản lãnh đạo, thực hiện quyền làm chủ của nhân dân. Tính 'phi giai cấp' là quan điểm sai lầm, không phù hợp với lý luận Mác–Lênin về nhà nước."
+  },
+  {
+    category: "Tổng hợp & Nâng cao",
+    text: "Trong thời kỳ quá độ lên chủ nghĩa xã hội ở Việt Nam, Nhà nước có vai trò như thế nào đối với nền kinh tế?",
+    options: [
+      "Nhà nước hoàn toàn không can thiệp vào kinh tế, để thị trường tự điều tiết.",
+      "Nhà nước xóa bỏ hoàn toàn kinh tế tư nhân và chỉ duy trì kinh tế nhà nước.",
+      "Nhà nước quản lý, điều tiết nền kinh tế thị trường định hướng XHCN, phát huy vai trò chủ đạo của kinh tế nhà nước, đồng thời khuyến khích các thành phần kinh tế khác.",
+      "Nhà nước chỉ đóng vai trò thu thuế và không thực hiện chức năng kinh tế."
+    ],
+    correct: 2,
+    explanation: "Trong thời kỳ quá độ, Nhà nước XHCN Việt Nam quản lý và điều tiết nền kinh tế thị trường theo định hướng XHCN: phát huy vai trò chủ đạo của kinh tế nhà nước, đồng thời khuyến khích các thành phần kinh tế khác phát triển theo pháp luật."
+  },
+  {
+    category: "Tổng hợp & Nâng cao",
+    text: "Câu nào sau đây phản ánh đúng nhất đặc trưng của Nhà nước pháp quyền XHCN Việt Nam trong mối quan hệ với Đảng Cộng sản Việt Nam?",
+    options: [
+      "Đảng Cộng sản Việt Nam nằm ngoài và trên Hiến pháp, không chịu sự điều chỉnh của pháp luật.",
+      "Nhà nước hoàn toàn tách biệt với Đảng, hoạt động độc lập không theo sự lãnh đạo của Đảng.",
+      "Đảng Cộng sản Việt Nam lãnh đạo Nhà nước và xã hội, nhưng hoạt động trong khuôn khổ Hiến pháp và pháp luật.",
+      "Mọi đảng phái đều có quyền lãnh đạo Nhà nước ngang nhau theo mô hình đa đảng."
+    ],
+    correct: 2,
+    explanation: "Đặc trưng quan trọng của Nhà nước pháp quyền XHCN Việt Nam là Đảng Cộng sản Việt Nam lãnh đạo Nhà nước và xã hội, nhưng Đảng hoạt động trong khuôn khổ Hiến pháp và pháp luật. Vai trò lãnh đạo của Đảng được hiến định trong Hiến pháp năm 2013 (Điều 4)."
+  }
+];
+
+const TIEBREAKER = {
+  text: "Theo Hiến pháp năm 2013 của Việt Nam, quyền lực nhà nước thuộc về ai và được thực hiện thông qua cơ quan nào là cơ quan đại biểu cao nhất?",
+  options: [
+    "Quyền lực thuộc về Đảng Cộng sản Việt Nam và thực hiện qua Ban Chấp hành Trung ương.",
+    "Quyền lực nhà nước thuộc về nhân dân; cơ quan đại biểu cao nhất của nhân dân là Quốc hội.",
+    "Quyền lực thuộc về Chính phủ và thực hiện qua Thủ tướng Chính phủ.",
+    "Quyền lực thuộc về Tòa án nhân dân tối cao với tư cách cơ quan tư pháp tối cao."
+  ],
+  correct: 1,
+  explanation: "Điều 2, Điều 69 Hiến pháp 2013: 'Nước Cộng hoà xã hội chủ nghĩa Việt Nam do Nhân dân làm chủ'; 'Quốc hội là cơ quan đại biểu cao nhất của Nhân dân, cơ quan quyền lực nhà nước cao nhất của nước Cộng hoà xã hội chủ nghĩa Việt Nam.'"
+};
+
+// =========================================================
+//  STATE
+// =========================================================
+let teams = [];
+let scores = [];
+let currentQ = 0;
+let timerInterval = null;
+let timeLeft = 10;
+let revealed = false;
+let numTeams = 3;
+
+// =========================================================
+//  SETUP SCREEN
+// =========================================================
+const countBtns = document.querySelectorAll('.team-count-btn');
+countBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    countBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    numTeams = parseInt(btn.dataset.count);
+    renderTeamInputs();
+  });
+});
+
+function renderTeamInputs() {
+  const container = document.getElementById('team-inputs');
+  container.innerHTML = '';
+  const defaultNames = ['Đội Đỏ 🔴','Đội Vàng 🟡','Đội Xanh 🟢','Đội Cam 🟠'];
+  for (let i = 0; i < numTeams; i++) {
+    container.innerHTML += `
+      <div class="flex items-center gap-3">
+        <div class="text-yellow-300 font-black w-16 text-sm">ĐỘI ${i+1}:</div>
+        <input class="team-input" id="team-${i}" type="text" placeholder="${defaultNames[i]}" value="${defaultNames[i]}">
+      </div>`;
+  }
+}
+renderTeamInputs();
+
+function startGame() {
+  teams = [];
+  scores = [];
+  for (let i = 0; i < numTeams; i++) {
+    const val = document.getElementById(`team-${i}`).value.trim();
+    teams.push(val || `Đội ${i+1}`);
+    scores.push(0);
+  }
+  currentQ = 0;
+  document.getElementById('screen-setup').classList.add('hidden');
+  document.getElementById('screen-quiz').classList.remove('hidden');
+  renderScoreBoard();
+  loadQuestion();
+}
+
+// =========================================================
+//  SCORE BOARD
+// =========================================================
+function renderScoreBoard() {
+  const sb = document.getElementById('score-board');
+  sb.innerHTML = teams.map((t,i) => `
+    <div class="team-score" id="ts-${i}">
+      <div class="team-name">${t}</div>
+      <div class="team-pts" id="score-${i}">${scores[i]}</div>
+    </div>`).join('');
+}
+
+function updateScores() {
+  teams.forEach((_,i) => {
+    document.getElementById(`score-${i}`).textContent = scores[i];
+  });
+}
+
+// =========================================================
+//  QUIZ LOGIC
+// =========================================================
+function loadQuestion() {
+  revealed = false;
+  const q = QUESTIONS[currentQ];
+
+  document.getElementById('q-number').textContent = `CÂU ${currentQ+1} / ${QUESTIONS.length}`;
+  document.getElementById('q-category').textContent = q.category;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('progress-fill').style.width = `${(currentQ / QUESTIONS.length) * 100}%`;
+
+  // Render options
+  const grid = document.getElementById('answers-grid');
+  const labels = ['A','B','C','D'];
+  grid.innerHTML = q.options.map((opt, i) => `
+    <button class="answer-btn" id="ans-${i}" onclick="selectAnswer(${i})" disabled>
+      <span class="label">${labels[i]}</span>
+      <span>${opt}</span>
+    </button>`).join('');
+
+  // Hide/reset UI
+  document.getElementById('explanation-area').classList.add('hidden');
+  document.getElementById('score-modal').classList.add('hidden');
+  document.getElementById('btn-reveal').classList.remove('hidden');
+  document.getElementById('btn-score').classList.add('hidden');
+  document.getElementById('btn-next').classList.add('hidden');
+
+  // Start timer
+  startTimer();
+}
+
+function startTimer() {
+  timeLeft = 10;
+  const display = document.getElementById('timer-display');
+  display.textContent = timeLeft;
+  display.classList.remove('urgent');
+
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    display.textContent = timeLeft;
+    if (timeLeft <= 3) display.classList.add('urgent');
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      display.textContent = '⏰';
+    }
+  }, 1000);
+}
+
+function revealAnswer() {
+  if (revealed) return;
+  revealed = true;
+  clearInterval(timerInterval);
+
+  const q = QUESTIONS[currentQ];
+  const labels = ['A','B','C','D'];
+
+  // Highlight correct answer
+  q.options.forEach((_, i) => {
+    const btn = document.getElementById(`ans-${i}`);
+    if (i === q.correct) btn.classList.add('correct');
+    else btn.classList.add('neutral');
+  });
+
+  // Show explanation
+  document.getElementById('correct-label').textContent = labels[q.correct];
+  document.getElementById('explanation-text').textContent = q.explanation;
+  document.getElementById('explanation-area').classList.remove('hidden');
+
+  // Show action buttons
+  document.getElementById('btn-reveal').classList.add('hidden');
+  document.getElementById('btn-score').classList.remove('hidden');
+  document.getElementById('btn-next').classList.remove('hidden');
+}
+
+function selectAnswer(idx) {} // placeholder (answers disabled)
+
+function openScoreInput() {
+  const modal = document.getElementById('score-modal');
+  const cb = document.getElementById('score-checkboxes');
+  modal.classList.remove('hidden');
+  cb.innerHTML = teams.map((t,i) => `
+    <label class="flex items-center gap-2 cursor-pointer panel p-2 hover:border-yellow-400 transition-colors">
+      <input type="checkbox" id="cb-${i}" class="w-4 h-4 accent-yellow-400">
+      <span class="text-sm font-semibold">${t}</span>
+    </label>`).join('');
+}
+
+function applyScores() {
+  teams.forEach((_,i) => {
+    if (document.getElementById(`cb-${i}`).checked) scores[i]++;
+  });
+  updateScores();
+  document.getElementById('score-modal').classList.add('hidden');
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= QUESTIONS.length) {
+    endGame();
+  } else {
+    loadQuestion();
+  }
+}
+
+// =========================================================
+//  END GAME & RESULTS
+// =========================================================
+function endGame() {
+  document.getElementById('screen-quiz').classList.add('hidden');
+
+  const maxScore = Math.max(...scores);
+  const winners = teams.filter((_, i) => scores[i] === maxScore);
+
+  if (winners.length > 1) {
+    // Tiebreaker!
+    showTiebreaker(winners, maxScore);
+  } else {
+    showResults();
+  }
+}
+
+function showTiebreaker(tiedTeams, tiedScore) {
+  document.getElementById('screen-tiebreaker').classList.remove('hidden');
+  const tb = TIEBREAKER;
+  document.getElementById('tb-question').textContent = tb.text;
+  const labels = ['A','B','C','D'];
+  const container = document.getElementById('tb-answers');
+  container.innerHTML = tb.options.map((opt, i) => `
+    <button class="tb-btn" id="tb-btn-${i}" onclick="answerTiebreaker(${i})">
+      <span class="text-yellow-300 font-black mr-2">${labels[i]}.</span>${opt}
+    </button>`).join('');
+}
+
+function answerTiebreaker(idx) {
+  const tb = TIEBREAKER;
+  const labels = ['A','B','C','D'];
+  document.querySelectorAll('[id^="tb-btn-"]').forEach((b, i) => {
+    b.disabled = true;
+    if (i === tb.correct) b.classList.add('tb-correct');
+    else b.classList.add('tb-wrong');
+  });
+  const result = document.getElementById('tb-result');
+  result.classList.remove('hidden');
+  if (idx === tb.correct) {
+    result.innerHTML = `<div class="text-2xl mb-2">🎉</div><strong class="text-yellow-300">CHÍNH XÁC!</strong><br><span class="text-sm mt-1 block">${tb.explanation}</span>`;
+  } else {
+    result.innerHTML = `<div class="text-2xl mb-2">❌</div><strong>Chưa đúng!</strong> Đáp án: <strong class="text-yellow-300">${labels[tb.correct]}</strong><br><span class="text-sm mt-1 block">${tb.explanation}</span>`;
+  }
+  setTimeout(() => {
+    document.getElementById('screen-tiebreaker').classList.add('hidden');
+    showResults();
+  }, 4000);
+}
+
+function showResults() {
+  document.getElementById('screen-quiz').classList.add('hidden');
+  document.getElementById('screen-tiebreaker').classList.add('hidden');
+  document.getElementById('screen-results').classList.remove('hidden');
+
+  // Sort teams by score
+  const ranked = teams.map((t, i) => ({ name: t, score: scores[i] }))
+    .sort((a, b) => b.score - a.score);
+
+  const maxScore = ranked[0].score;
+  const medal = ['🥇','🥈','🥉','4️⃣'];
+  const winners = ranked.filter(t => t.score === maxScore).map(t => t.name);
+
+  document.getElementById('winner-title').textContent =
+    winners.length === 1 ? `🎉 ${winners[0]}` : `🎉 ${winners.join(' & ')}`;
+  document.getElementById('winner-subtitle').textContent =
+    winners.length === 1
+      ? `Vô địch với ${maxScore} điểm!`
+      : `Đồng vô địch với ${maxScore} điểm!`;
+
+  document.getElementById('final-ranking').innerHTML = ranked.map((t, i) => `
+    <div class="team-score flex items-center justify-between px-4 py-3 ${i===0?'active':''}">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">${medal[i]||'🏅'}</span>
+        <span class="font-bold">${t.name}</span>
+      </div>
+      <span class="text-yellow-300 font-black text-xl">${t.score} <span class="text-sm font-normal opacity-70">điểm</span></span>
+    </div>`).join('');
+
+  document.getElementById('stat-teams').textContent = teams.length;
+  document.getElementById('stat-winner-score').textContent = maxScore;
+
+  spawnConfetti();
+}
+
+// =========================================================
+//  CONFETTI
+// =========================================================
+function spawnConfetti() {
+  const colors = ['#FFD700','#FF4444','#00CC44','#4488FF','#FF8800','#FF44FF'];
+  for (let i = 0; i < 60; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.background = colors[Math.floor(Math.random() * colors.length)];
+      el.style.animationDuration = (2 + Math.random() * 2) + 's';
+      el.style.animationDelay = (Math.random() * 2) + 's';
+      el.style.width = el.style.height = (8 + Math.random() * 10) + 'px';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 5000);
+    }, i * 50);
+  }
+}
+</script>
+</body>
+</html>
